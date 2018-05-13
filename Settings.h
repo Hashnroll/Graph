@@ -8,6 +8,7 @@ int MAX_VERTICES = 100; //максимальное кол-во вершин
 int VERTEX_RADIUS = 10; //радиус вершины 
  
 sf::Color vertexColor(100, 200, 150); //цвет вершины
+sf::Color vertexColorSelected(200, 100, 0);
 
 sf::Color backg(234, 239, 243); //цвет фона
 
