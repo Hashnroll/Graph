@@ -2,25 +2,48 @@
 //#include <SFML\Graphics.hpp>
 #include "Settings.h"
 #include <vector>
+#include <iterator>
+#include <string>
 
 struct vertex {
 	sf::CircleShape* circle;
 	sf::FloatRect bound;
+	bool selected;
 
-	vertex(int x, int y) {
-		circle = new sf::CircleShape(VERTEX_RADIUS);
+	int index;
+	sf::Text name;
+
+	vertex(int x, int y, int ind) {
+		circle = new sf::CircleShape(VERTEX_RADIUS); //настройка круга
 		circle->setOrigin(VERTEX_RADIUS, VERTEX_RADIUS);
 		circle->setPosition(x, y);
 		circle->setFillColor(vertexColor);
 
-		bound = circle->getLocalBounds();
-		bound.left = circle->getPosition().x - 3*VERTEX_RADIUS;
-		bound.top = circle->getPosition().y - 3*VERTEX_RADIUS;
-		bound.width = bound.height = 6 * VERTEX_RADIUS;
+		bound = circle->getLocalBounds(); //настройка границы
+		bound.left = circle->getPosition().x - 2*VERTEX_RADIUS;
+		bound.top = circle->getPosition().y - 2*VERTEX_RADIUS;
+		bound.width = bound.height = 4 * VERTEX_RADIUS;
+
+		index = ind;
+
+		name.setFont(vertexNameFont); //настройка названия вершины
+		name.setString(std::to_string(index));
+		name.setCharacterSize(VERTEX_NAME_SIZE);
+		name.setOrigin(name.getLocalBounds().left + name.getLocalBounds().width/2.0f, name.getLocalBounds().top + name.getLocalBounds().height / 2.0f);
+		name.setPosition(circle->getPosition());
+
+
+		selected = false;
 	}
 
-	sf::CircleShape getCircle() {
-		return *circle;
+	void select() {
+		selected = true;
+		circle->setFillColor(vertexColorSelected);
+	}
+
+	void deselect() {
+		selected = false;
+		circle->setFillColor(vertexColor);
 	}
 
 	/*~vertex() {
@@ -29,18 +52,27 @@ struct vertex {
 };
 
 std::vector<vertex> vertices;
+std::vector<vertex*> selectedVertices;
 
 void drawGraph() {
-	for (auto v : vertices) {
-		app.draw(v.getCircle());
+	int index = 0;
+	if (vertexNameFontLoaded){
+		for (auto v : vertices) {
+			app.draw(*v.circle);
+			app.draw(v.name);
+		}
 	}
+	else
+		for (auto v : vertices) app.draw(*v.circle);
 }
 
-vertex* findCollision(sf::Event::MouseButtonEvent press) {
-	for (auto v : vertices) {
-		if (v.bound.contains(sf::Vector2f(press.x, press.y))) return &v;
+std::vector<vertex>::iterator findCollision(sf::Event::MouseButtonEvent press) {
+	vector<vertex>::iterator v = vertices.begin();
+	while (v != vertices.end()) {
+		if ((*v).bound.contains(sf::Vector2f(press.x, press.y))) return v;
+		v++;
 	}
-	return NULL;
+	return vertices.end();
 }
 
 void drawGrid() {

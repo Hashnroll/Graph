@@ -1,14 +1,24 @@
 #include "Graph.h"
 #include "Drawing.h"
 #include <SFML\Graphics.hpp>
+#include <iostream>
 
+//Design todo-s
+//TODO #1: make a button for connecting vertices
+//TODO #2: implement function "orderVerticesIndices" cause after removing some vertices their indices are "lost"
+
+//Performance todo-s
 //TODO #1: check memory leaks
 //TODO #2: copy constructor for vertex struct(cause it's copied to vector)
 
 using namespace sf;
 
 void init() {
-	vertices.reserve(MAX_VERTICES);
+	vertices.reserve(MAX_VERTICES); //установить макс. кол-во вершин
+
+	if (vertexNameFont.loadFromFile("fonts/arial.ttf")) 
+		vertexNameFontLoaded = true;
+		 
 }
 
 int main() {
@@ -25,24 +35,38 @@ int main() {
 			
 			if (event.type == sf::Event::MouseButtonPressed)
 			{
+				vector<vertex>::iterator collision = findCollision(event.mouseButton);
 				if (event.mouseButton.button == sf::Mouse::Left)
 				{
-					vertex* collision = findCollision(event.mouseButton);
-					if (collision == NULL) { //нажатие не попало на вершину
-						/*CircleShape newVertex(VERTEX_RADIUS);
-						newVertex.setOrigin(VERTEX_RADIUS, VERTEX_RADIUS);
-						newVertex.setPosition(event.mouseButton.x, event.mouseButton.y);*/
-						vertex* v = new vertex(event.mouseButton.x, event.mouseButton.y);
+					if (collision == vertices.end()) { //нажатие не попало на вершину
+						vertex* v = new vertex(event.mouseButton.x, event.mouseButton.y, g.getMaxIndex());
 						vertices.push_back(*v);
-						//
 						g.addVertex();
 					}
 					else { //нажатие попало на вершину
-						if (collision->circle->getFillColor()==vertexColor) collision->circle->setFillColor(vertexColorSelected);
-						else collision->circle->setFillColor(vertexColor);
+						if (collision->selected == true) { //если вершина активирована, деактивировать только ее
+							collision->deselect();
+						}
+						else { //если вершина деактивирована, активировать ее
+							if (!Keyboard::isKeyPressed(Keyboard::LControl)) { //а все остальные деактивировать, если не зажат Left Ctrl
+								vector<vertex>::iterator it = vertices.begin();
+								while (it != vertices.end()) {
+									if (it->selected == true) it->deselect();
+									it++;
+								}
+							}
+							collision->select();
+						}
+					}
+				}
+				if (event.mouseButton.button == sf::Mouse::Right) {
+					if (collision != vertices.end()) {
+						g.deleteVertex(collision->index);
+						vertices.erase(collision); //TODO: это не очищает память процесса; разобраться, как ее очистить
 					}
 				}
 			}
+			g.print(); cout << endl;
 		}
 
 		app.clear(backg);
