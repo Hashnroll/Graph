@@ -78,6 +78,18 @@ public:
 		return maxIndex;
 	}
 
+	bool connected(int ind1, int ind2) { //существует ли связь от ind1 к ind2
+		for (auto v : adj)
+		{
+			if (v.first == ind1) {
+				for (auto w : v.second)
+					if (w == ind2) return true;
+				return false;
+			}
+		}
+		return false;
+	}
+
 	void print() {
 		for (int i = 0; i<V; i++) {
 			cout<<adj[i].first << " : ";
