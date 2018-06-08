@@ -9,11 +9,47 @@ using namespace std;
 
 class Graph {
 private:
-	vector<pair<int, deque<int>>> adj; //список связей, где deque - двунаправленная очередь, в которой хранятся все вершины, смежные с вершиной по индексу i
+	class edgeGraph {
+	private:
+		int v; //первая вершина, из которой идет дуга
+		int w; //вторая вершина, в которую идет дуга
+		int weight; //вес дуги
+	public:
+		edgeGraph(int indexFirst, int indexSecond, int weightValue) {
+			v = indexFirst;
+			w = indexSecond;
+			weight = weightValue;
+		}
+
+		int vertexFirst() {
+			return v;
+		}
+
+		int vertexSecond() {
+			return w;
+		}
+
+		int getWeight() {
+			return weight;
+		}
+
+		int compareTo(edgeGraph e) {
+			if (this->weight < e.weight) return -1;
+			else if (this->weight > e.weight) return 1;
+			else return 0;
+		}
+
+		const bool operator==(edgeGraph e) {
+			return ((v==e.vertexFirst()) && (w==e.vertexSecond()) && (weight=e.getWeight()));
+		}
+	};
+
+	vector<pair<int, deque<edgeGraph>>> adj; //список связей, где deque - двунаправленная очередь, в которой хранятся все ребра, инцидентные с вершиной по индексу i
 	map<int, int> indegree; //кол-во вершин, входящих в эту вершину. 1ый int-индекс вершины, 2ой int-кол-во вершин, входящих в нее
 	int V; //кол-во вершин в графе
 	int E; //кол-во ребер в графе
-	int maxIndex; //максимальный индекс из всех вершин
+	int maxIndex; //максимальный индекс
+
 
 public:
 
@@ -25,23 +61,23 @@ public:
 
 
 	void addVertex() { //добавить вершину
-		adj.push_back(make_pair(maxIndex, deque<int>())); //вставка нового дека в вектор
+		adj.push_back(make_pair(maxIndex, deque<edgeGraph>())); //вставка нового дека в вектор
 		indegree.insert(pair<int, int>(maxIndex, 0));//изначально в вершину V не входят никакие вершины
 		V++; //увеличиваем счетчик вершин
 		maxIndex++;
 	}
 
 	void deleteVertex(int i) {
-		if (i>0 && i<V) adj.erase(adj.begin() + i); //удаление из вектора элемента с индексом i(т.е. пары, первый элемент которой - индекс i, а второй - дек, в котором хранятся все смежные вершины для вершины i
+		for (auto it = adj.begin(); it != adj.end(); it++)  //проход по вектору(по вершинам)
+			if (connected(i, it->first) || connected(it->first,i)) {  //если вершина соединена с удаляемой, ребра между ними стоит убрать
+				deleteEdge(i, it->first);
+				deleteEdge(it->first, i);
+			}
 
-		for (auto it = adj.begin(); it != adj.end(); it++) { //проход по вектору(по вершинам)
-			deque<int>::iterator it_deque = it->second.begin(); //итератор для дека
-			while (it_deque != it->second.end()) { //проход по деку - по всем смежным вершинам для данной
-				if (*it_deque == i) {
-					it->second.erase(it_deque);
-					break;
-				}
-				it_deque++;
+		for (auto it = adj.begin(); it != adj.end(); it++) { //проход по вершинам и удаление самой вершины
+			if (it->first == i) {
+				adj.erase(it);
+				break;
 			}
 		}
 
@@ -49,21 +85,31 @@ public:
 		V--;
 	}
 
-	void addEdge(int v, int w) { //добавление ребра
-		adj[v].second.push_back(w);
+	void addEdge(int v, int w, int weight) { //добавление ребра из v в w
+		edgeGraph newEdge(v, w, weight);
+		adj[v].second.push_back(newEdge);
+		adj[w].second.push_back(newEdge);
 		indegree.at(w)++; //теперь в вершину w входит на одну вершину больше
 		E++;
 	}
 
 	void deleteEdge(int v, int w) { //удаление ребра из v в w
-		deque<int>::iterator it_deque;
+		deque<edgeGraph>::iterator it_deque;
 		for (it_deque = adj[v].second.begin(); it_deque != adj[v].second.end(); it_deque++)
-			if (*it_deque == w) adj[v].second.erase(it_deque);
+			if ((*it_deque).vertexSecond() == w) {
+				adj[v].second.erase(it_deque);
+				break;
+			}
 		indegree.at(w)--;
+		for (it_deque = adj[w].second.begin(); it_deque != adj[w].second.end(); it_deque++)
+			if ((*it_deque).vertexFirst() == v) {
+				adj[w].second.erase(it_deque);
+				break;
+			}
 	}
 
 	void vertexIdentification(int v, int w) { //отождествление вершин
-		deque<int>::iterator it_w, it_v;
+		deque<edgeGraph>::iterator it_w, it_v;
 		for (it_w = adj[w].second.begin(); it_w != adj[w].second.end(); it_w++) //проход по всем вершинам, смежным с w
 			if (find(adj[v].second.begin(), adj[v].second.end(), *it_w) == adj[v].second.end()) //если этой вершины нет в смежных с v
 				adj[w].second.push_back(*it_w); //добавить ее туда
@@ -81,9 +127,9 @@ public:
 	bool connected(int ind1, int ind2) { //существует ли связь от ind1 к ind2
 		for (auto v : adj)
 		{
-			if (v.first == ind1) {
-				for (auto w : v.second)
-					if (w == ind2) return true;
+			if (v.first == ind1) { //ищем первую вершину
+				for (auto e : v.second)
+					if (e.vertexSecond() == ind2) return true;  //если найдена первая вершина, ищем вторую в списке смежных с ней вершин
 				return false;
 			}
 		}
@@ -94,7 +140,7 @@ public:
 		for (int i = 0; i<V; i++) {
 			cout<<adj[i].first << " : ";
 			for (auto it = adj[i].second.begin(); it != adj[i].second.end(); it++) {
-				cout<<*it << " ";
+				cout<<(*it).vertexFirst() << "->"<<(*it).vertexSecond()<<" "<<(*it).getWeight()<<", ";
 			}
 			cout << endl;
 		}
