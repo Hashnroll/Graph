@@ -1,10 +1,11 @@
 //файл с настройками программы
 
 #pragma once
-#include <SFML\Graphics.hpp>
+#include <TGUI/TGUI.hpp>
 
-int WIDTH = 800, HEIGHT = 600; //ширина, высота окна
-int MAX_VERTICES = 100; //максимальное кол-во вершин
+unsigned int WIDTH = 800, HEIGHT = 600; //ширина, высота окна
+unsigned int MAX_VERTICES = 100; //максимальное кол-во вершин
+unsigned int MAX_EDGES = 500;
 int VERTEX_RADIUS = 25; //радиус вершины 
 int VERTEX_NAME_SIZE = VERTEX_RADIUS * 50 / 51; //размер надписи на вершине
 int MOUSE_TRAVEL_THRESHOLD = 100; //если мышь прошла расстояние, меньшее этого, то не регистировать это, как пройденное расстояние
@@ -26,5 +27,7 @@ sf::Texture arrowTexture;
 sf::Sprite arrowTemplate; //спрайт для стрелочки(которая на дуге между вершинами)
 
 
-sf::RenderWindow app(sf::VideoMode(WIDTH, HEIGHT), "Graph wizard"); //окно приложения
+sf::RenderWindow app(sf::VideoMode(WIDTH,HEIGHT), "Graph wizard"); //окно приложения
 sf::View view;
+
+tgui::Gui gui(app); //gui для виджетов

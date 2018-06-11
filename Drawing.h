@@ -1,12 +1,13 @@
 #pragma once
 #include "Settings.h"
-#include <vector>
+#include <list>
 #include <iterator>
 #include <string>
 #include <algorithm>
 
 //базовый класс для графического объекта интерфейса(вершин, ребер, кнопок)
-class InterfaceObject {
+class InterfaceObject
+{
 protected:
 	bool selected; //активен ли объект?
 	sf::FloatRect bound; //границы графического представления объекта
@@ -108,7 +109,7 @@ public:
 	}
 };
 
-std::vector<vertex> vertices; //графическое представление вершин
+std::list<vertex> vertices; //графическое представление вершин
 
 //класс ребра, реализующий InterfaceObject
 class edge : public InterfaceObject { 
@@ -122,12 +123,12 @@ private:
 	int weight; //вес ребра
 	sf::Text weightText;//отображение веса
 public:
-	edge(vertex *ptr1, vertex *ptr2, int w) {
+	edge(vertex* ptr1, vertex* ptr2, int w) {
 		v1 = ptr1;
 		v2 = ptr2;
 
 		normal.x = v2->getCoord().y - v1->getCoord().y;
-		normal.y = v1->getCoord().x - v2->getCoord().x;
+		normal.y = v2->getCoord().x - v2->getCoord().x;
 		
 		line[0].color = line[1].color = edgeColor;
 
@@ -146,7 +147,7 @@ public:
 	vertex* getFirstVertex() {
 		return v1;
 	}
-	vertex* getSecondVertex() { 
+	vertex* getSecondVertex() {
 		return v2;
 	}
 	
@@ -199,18 +200,23 @@ public:
 		selected = false;
 		line[0].color = line[1].color = edgeColor;
 	}
+
+	void inputWeight() {
+
+	}
+
 };
 
-std::vector<edge> edges; //графическое представление ребер
+std::list<edge> edges; //графическое представление ребер
 
 void addVertexToScreen(vertex* v) { //добавить вершину на экран
 	vertices.push_back(*v);
 }
 
 void deleteEdgeFromScreen(edge* e) { //удалить ребро с экрана
-	vector<edge>::iterator it = edges.begin();
-	while (it != edges.end()) { //поиск и удаление ребер, инцидентных данной вершине
-		if (it->getFirstVertex() == e->getFirstVertex()|| it->getSecondVertex() == e->getSecondVertex()) {
+	list<edge>::iterator it = edges.begin();
+	while (it != edges.end()) {
+		if (it->getFirstVertex() == e->getFirstVertex() && it->getSecondVertex() == e->getSecondVertex()) { //если вершины совпадают, то ребро найдено
 			edges.erase(it);
 			break;
 		}
@@ -218,20 +224,26 @@ void deleteEdgeFromScreen(edge* e) { //удалить ребро с экрана
 	}
 }
 
-vector<edge>::iterator deleteEdgeFromScreen(vector<edge>::iterator it) { //удалить ребро с экрана(через итератор)
+std::list<edge>::iterator deleteEdgeFromScreen(std::list<edge>::iterator it) { //удалить ребро с экрана(через итератор)
 	return edges.erase(it);
 }
 
 void deleteVertexFromScreen(vertex* v) { //удалить вершину с экрана
-	vector<edge>::iterator it = edges.begin();
-	while (it!=edges.end()){ //удалить ребра, инцидентные вершине
-		if (it->getFirstVertex() == v || it->getSecondVertex() == v) {
-			it = deleteEdgeFromScreen(it);
-		}
+	std::list<edge>::iterator it = edges.begin();
+	while (it != edges.end()) { //удалить ребра, инцидентные вершине
+		if (it->getFirstVertex() == v || it->getSecondVertex() == v) it = deleteEdgeFromScreen(it);
 		else it++;
 	}
 
-	vertices.erase(vertices.begin() + std::distance(vertices.data(), v)); //удалить вершину из массива вершин
+	//непосредственно удаление вершины
+	std::list<vertex>::iterator itV = vertices.begin();//O(n) time complexity. 
+	while (itV != vertices.end()) {
+		if (itV->getIndex() == v->getIndex()) {
+			vertices.erase(itV);
+			break;
+		}
+		itV++;
+	}
 }
 
 void addEdgeToScreen(edge* e) { //добавить ребро на экран
@@ -239,26 +251,25 @@ void addEdgeToScreen(edge* e) { //добавить ребро на экран
 }
 
 
-
-void drawGraph() {
-	for (auto e : edges) {
-		e.draw();
-	}
-	for (auto v : vertices) {
-		v.draw();
-	}
+void drawGraph() { //отрисовка вершин и ребер
+	for (auto e : edges) e.draw();
+	for (auto v : vertices) v.draw();
 }
 
-InterfaceObject* findCollision(sf::Vector2f mouseAppPos) {
-	vector<vertex>::iterator v = vertices.begin();
+InterfaceObject* findCollision(sf::Vector2f mouseAppPos) { //найти попадание в вершину
+	std::list<vertex>::iterator v = vertices.begin();
 	while (v != vertices.end()) {
-		if (v->contains(mouseAppPos)) return v._Ptr;
+		if (v->contains(mouseAppPos)) {
+			return &(*v);
+		}
 		v++;
 	}
-
-	vector<edge>::iterator e = edges.begin();
+	
+	std::list<edge>::iterator e = edges.begin();
 	while (e != edges.end()) {
-		if (e->contains(mouseAppPos)) return e._Ptr;
+		if (e->contains(mouseAppPos)) {
+			return &(*e);
+		}
 		e++;
 	}
 
