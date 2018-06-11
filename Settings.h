@@ -3,7 +3,7 @@
 #pragma once
 #include <TGUI/TGUI.hpp>
 
-unsigned int WIDTH = 800, HEIGHT = 600; //ширина, высота окна
+unsigned int WIDTH = 1200, HEIGHT = 780; //ширина, высота окна
 unsigned int MAX_VERTICES = 100; //максимальное кол-во вершин
 unsigned int MAX_EDGES = 500;
 int VERTEX_RADIUS = 25; //радиус вершины 
@@ -26,8 +26,11 @@ bool fontLoaded = false; //загружен ли шрифт надписи для вершины?
 sf::Texture arrowTexture;
 sf::Sprite arrowTemplate; //спрайт для стрелочки(которая на дуге между вершинами)
 
+tgui::TextBox::Ptr inputWeightTextBox;
 tgui::Layout2d inputWeightTextBoxSize(50,20); //размеры textbox для ввода ребра
 bool inputWeightInProcess;
+
+tgui::Tab::Ptr tabs; //вкладки
 
 sf::RenderWindow app(sf::VideoMode(WIDTH,HEIGHT), "Graph wizard"); //окно приложения
 sf::View view;

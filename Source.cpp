@@ -18,6 +18,14 @@
 using namespace sf;
 using namespace tgui;
 
+void onTabSelected(tgui::Gui& gui, std::string selectedTab)
+{
+	// Show the correct panel
+	if (selectedTab == "Graph") gui.get("MenuPanel")->hide();
+	else if (selectedTab == "Menu") gui.get("MenuPanel")->show();
+}
+
+
 void init() {
 	if (font.loadFromFile("fonts/arial.ttf"))  //загрузить шрифт для надписей
 		fontLoaded = true;
@@ -26,7 +34,40 @@ void init() {
 		arrowTemplate.setTexture(arrowTexture);
 		 
 	view.reset(sf::FloatRect(0,0,WIDTH,HEIGHT));
+
+	//настройка вкладок для 1)отображения графа и 2)меню
+	tabs = tgui::Tab::create();
+	tabs->add("Graph");
+	tabs->add("Menu");
+	tabs->setPosition(0, 0);
+	tabs->setSize(0, 0);
+	gui.add(tabs);
+
+	// Create the first panel
+	tgui::Panel::Ptr menuPanel = tgui::Panel::create();
+	menuPanel->setSize(WIDTH, HEIGHT);
+	menuPanel->setPosition(tabs->getPosition().x, tabs->getPosition().y + tabs->getTabHeight());
+	//добавить виджеты на панель
+	menuPanel->add(tgui::Button::create("Ford-Bellman"));
+	//добавить панель в gui
+	gui.add(menuPanel, "MenuPanel");
+
+	// Enable callback when another tab is selected (pass reference to the gui as first parameter)
+	tabs->connect("TabSelected", onTabSelected, std::ref(gui));
+
+	// Select the first tab and only show the first panel
+	tabs->select("Graph");
+	menuPanel->hide();
+
+	//настройка поля для ввода веса дуги
+	inputWeightTextBox = tgui::TextBox::create(); //поле для ввода веса дуги
+	inputWeightInProcess = false; //изначально вес дуги не вводится
+	inputWeightTextBox->setSize(inputWeightTextBoxSize); //задать размеры этого поля
+	inputWeightTextBox->hide(); //скрыть его вначале
+	gui.add(inputWeightTextBox); //добавить на экран
 }
+
+
 
 int main() {
 	Graph g;
@@ -52,17 +93,6 @@ int main() {
 
 	edge* selectedEdge = nullptr; //указатель на выделенное ребро
 
-	/*Button::Ptr button = Button::create("Kruskal algorithm");
-	gui.add(button);*/
-	tgui::TextBox::Ptr inputWeightTextBox = tgui::TextBox::create(); //поле для ввода веса дуги
-	inputWeightInProcess = false; //изначально вес дуги не вводится
-	inputWeightTextBox->setSize(inputWeightTextBoxSize); //задать размеры этого поля
-	inputWeightTextBox->hide(); //скрыть его вначале
-	gui.add(inputWeightTextBox); //добавить на экран
-
-	//tgui::ListBox::Ptr popupMenu; //popup меню для таких ф-й, как "случайное задание графа", "алгоритм Форда-Беллмана", ""
-
-
 	while (app.isOpen()) {
 
 		mouseWindowPos = Mouse::getPosition(app); //получить координаты окна
@@ -78,126 +108,131 @@ int main() {
 			if (event.type == sf::Event::Resized)
 				view.setSize(event.size.width,event.size.height); //расширить окно до размера приложения
 
-			gui.handleEvent(event);
-
 			if (inputWeightInProcess) selectedEdge->inputWeight(inputWeightTextBox);
 
-			//обработка нажатий мыши
-			if (event.type == Event::MouseButtonPressed && !mousePressed) { //если еще не нажата
-				if (!mousePressed) {
-					mousePressed = true;
-					mousePressPos = mouseAppPos;
-					collisionPress = findCollision(mouseAppPos);
-				}
-				if (event.mouseButton.button == Mouse::Left)
-					if (collisionPress != nullptr) { //если попали на какой-то объект
-						if (collisionPress->getType() == "Vertex") {  //если попали на вершину 
-							if (collisionPress->isSelected()) { //если она выделена
-								dx = mouseAppPos.x - collisionPress->getCoord().x; //вычислить смещение
-								dy = mouseAppPos.y - collisionPress->getCoord().y;
+			gui.handleEvent(event) == false; //обработка gui событий
 
-								dragVertex = true; //включить drag'n'drop для вершины 
-
-							}
-							else { //если не выделена, drag'n'drop для ребра
-								draggingEdge[0].position = collisionPress->getCoord();
-
-								dragEdge = true;
-							}
-						}
+			if (tabs->getSelected() == "Graph") {
+				//обработка нажатий мыши
+				if (event.type == Event::MouseButtonPressed && mouseAppPos.y - (tabs->getPosition().y + tabs->getTabHeight()) > 5 && !mousePressed) { //если еще не нажата
+					if (!mousePressed) {
+						mousePressed = true;
+						mousePressPos = mouseAppPos;
+						collisionPress = findCollision(mouseAppPos);
 					}
-			}
+					if (event.mouseButton.button == Mouse::Left)
+						if (collisionPress != nullptr) { //если попали на какой-то объект
+							if (collisionPress->getType() == "Vertex") {  //если попали на вершину 
+								if (collisionPress->isSelected()) { //если она выделена
+									dx = mouseAppPos.x - collisionPress->getCoord().x; //вычислить смещение
+									dy = mouseAppPos.y - collisionPress->getCoord().y;
 
-			//обработка отпусканий мыши
-			if (event.type == Event::MouseButtonReleased) //если кнопка мыши отпущена
-			{
-				mousePressed = false;
-				collisionRelease = findCollision(mouseAppPos); //определяем, попадает ли нажатие в какой-то объект
-				if (event.mouseButton.button == Mouse::Left) //если отпущена ЛКМ
-				{
-					if (collisionRelease != nullptr) { //если попадание в объект
-						if (collisionRelease->getType() == "Vertex") { //если попадание в вершину
-							if (dragVertex) {
-								dragVertex = false; //если тянули вершину, отменить
-							}
-							if (dragEdge) { //если тянули ребро, отменить и прикрепить его к другой вершине
-								dragEdge = false;
-								int indexFirstVertex = ((vertex*)collisionPress)->getIndex(), indexSecondVertex = ((vertex*)collisionRelease)->getIndex(); //получаем индексы вершин данного ребра
-								if (indexFirstVertex!=indexSecondVertex && !g.connected(indexFirstVertex, indexSecondVertex)) { //если вершины еще не соединены, то соединяем
-									edge e((vertex*)collisionPress, (vertex*)collisionRelease, 1);
-									addEdgeToScreen(&e);
+									dragVertex = true; //включить drag'n'drop для вершины 
 
-									g.addEdge(indexFirstVertex, indexSecondVertex,1);
+								}
+								else { //если не выделена, drag'n'drop для ребра
+									draggingEdge[0].position = collisionPress->getCoord();
+
+									dragEdge = true;
 								}
 							}
-							if (mouseTravelledDistance < MOUSE_TRAVEL_THRESHOLD) {
-								if (collisionRelease->isSelected()) collisionRelease->deselect(); //если она выделена, отменить выделение
-								else collisionRelease->select(); //если она не выделена, выделить
-							}
-
-							mouseTravelledDistance = 0.0f; //обнуляем расстояние, пройденное мышью
 						}
-						else if (collisionRelease->getType() == "Edge") {
-							if (dragEdge) dragEdge = false;
-							else if (collisionRelease->isSelected()) {
-								g.setWeight(((edge*)collisionRelease)->getFirstVertex()->getIndex(), ((edge*)collisionRelease)->getSecondVertex()->getIndex(), ((edge*)collisionRelease)->getWeight()); //обновить вес для ребра в структуре данных для хранения графа
+				}
 
-								inputWeightTextBox->setText("");
+				//обработка отпусканий мыши
+				if (event.type == Event::MouseButtonReleased && mouseAppPos.y > 50) //если кнопка мыши отпущена
+				{
+					mousePressed = false;
+					collisionRelease = findCollision(mouseAppPos); //определяем, попадает ли нажатие в какой-то объект
+					if (event.mouseButton.button == Mouse::Left) //если отпущена ЛКМ
+					{
+						if (collisionRelease != nullptr) { //если попадание в объект
+							if (collisionRelease->getType() == "Vertex") { //если попадание в вершину
+								if (dragVertex) {
+									dragVertex = false; //если тянули вершину, отменить
+								}
+								if (dragEdge) { //если тянули ребро, отменить и прикрепить его к другой вершине
+									dragEdge = false;
+									int indexFirstVertex = ((vertex*)collisionPress)->getIndex(), indexSecondVertex = ((vertex*)collisionRelease)->getIndex(); //получаем индексы вершин данного ребра
+									if (indexFirstVertex != indexSecondVertex && !g.connected(indexFirstVertex, indexSecondVertex)) { //если вершины еще не соединены, то соединяем
+										edge e((vertex*)collisionPress, (vertex*)collisionRelease, 1);
+										addEdgeToScreen(&e);
 
-								collisionRelease->deselect(); //если ребро выделено, отменить выделение
-								selectedEdge = nullptr; //выделенных ребер теперь нет
-								inputWeightTextBox->hide();
-								inputWeightInProcess = false;
+										g.addEdge(indexFirstVertex, indexSecondVertex, 1);
+									}
+								}
+								if (mouseTravelledDistance < MOUSE_TRAVEL_THRESHOLD) {
+									if (collisionRelease->isSelected()) collisionRelease->deselect(); //если она выделена, отменить выделение
+									else collisionRelease->select(); //если она не выделена, выделить
+								}
+
+								mouseTravelledDistance = 0.0f; //обнуляем расстояние, пройденное мышью
 							}
+							else if (collisionRelease->getType() == "Edge") {
+								if (dragEdge) dragEdge = false;
+								else if (collisionRelease->isSelected()) {
+									g.setWeight(((edge*)selectedEdge)->getFirstVertex()->getIndex(), ((edge*)selectedEdge)->getSecondVertex()->getIndex(), ((edge*)selectedEdge)->getWeight()); //обновить вес для ребра в структуре данных для хранения графа
+
+									inputWeightTextBox->setText("");
+
+									collisionRelease->deselect(); //если ребро выделено, отменить выделение
+									selectedEdge = nullptr; //выделенных ребер теперь нет
+									inputWeightTextBox->hide();
+									inputWeightInProcess = false;
+								}
+								else {
+									inputWeightTextBox->setText("");
+
+									if (selectedEdge != nullptr) {
+										g.setWeight(((edge*)selectedEdge)->getFirstVertex()->getIndex(), ((edge*)selectedEdge)->getSecondVertex()->getIndex(), ((edge*)selectedEdge)->getWeight()); //обновить вес для ребра в структуре данных для хранения графа
+										selectedEdge->deselect(); //развыделить предыдущее выделенное ребро
+									}
+									collisionRelease->select(); //если ребро не выделено, выделить
+									selectedEdge = (edge*)(collisionRelease);
+									inputWeightInProcess = true;
+									selectedEdge->inputWeight(inputWeightTextBox);
+								}
+							}
+						}
+						else { //если нет попадания в объект
+							if (dragEdge) dragEdge = false; //если тянули ребро, отменяем
 							else {
-								inputWeightTextBox->setText("");
+								vertex v(mouseAppPos.x, mouseAppPos.y, g.getMaxIndex()); //добавить новую вершину на экран
+								addVertexToScreen(&v);
 
-								if (selectedEdge != nullptr) selectedEdge->deselect(); //развыделить предыдущее выделенное ребро
-								collisionRelease->select(); //если ребро не выделено, выделить
-								selectedEdge = (edge*)(collisionRelease);
-								inputWeightInProcess = true;
-								selectedEdge->inputWeight(inputWeightTextBox);
+								g.addVertex(); //добавляем вершину в структуру данных
 							}
 						}
 					}
-					else { //если нет попадания в объект
-						if (dragEdge) dragEdge = false; //если тянули ребро, отменяем
-						else {
-							vertex v(mouseAppPos.x, mouseAppPos.y, g.getMaxIndex()); //добавить новую вершину на экран
-							addVertexToScreen(&v);
 
-							g.addVertex(); //добавляем вершину в структуру данных
+					if (event.mouseButton.button == sf::Mouse::Right) { //если отпущена ПКМ
+						if (collisionRelease != nullptr) {
+							if (collisionRelease->getType() == "Vertex") { //если попали на вершину
+								g.deleteVertex(((vertex*)(collisionRelease))->getIndex()); //удаляем вершину из структуры данных
+
+								deleteVertexFromScreen((vertex*)(collisionRelease)); //удаляем вершину с экрана
+							}
+							else if (collisionRelease->getType() == "Edge") {//если попали на ребро
+								g.deleteEdge(((edge*)collisionRelease)->getFirstVertex()->getIndex(), ((edge*)collisionRelease)->getSecondVertex()->getIndex());
+
+								deleteEdgeFromScreen((edge*)collisionRelease); //удаляем ребро с экрана
+							}
 						}
 					}
 				}
 
-				if (event.mouseButton.button == sf::Mouse::Right) { //если отпущена ПКМ
-					if (collisionRelease != nullptr) {
-						if (collisionRelease->getType() == "Vertex") { //если попали на вершину
-							g.deleteVertex(((vertex*)(collisionRelease))->getIndex()); //удаляем вершину из структуры данных
-
-							deleteVertexFromScreen((vertex*)(collisionRelease)); //удаляем вершину с экрана
-						}
-						else if (collisionRelease->getType() == "Edge") {//если попали на ребро
-							g.deleteEdge(((edge*)collisionRelease)->getFirstVertex()->getIndex(), ((edge*)collisionRelease)->getSecondVertex()->getIndex());
-
-							deleteEdgeFromScreen((edge*)collisionRelease); //удаляем ребро с экрана
-						}
-					}
+				if (mousePressed) { //если мышь зажата
+					float frameMouseDistanceX = mouseAppPos.x - mousePressPos.x,
+						frameMouseDistanceY = mouseAppPos.y - mousePressPos.y; //вычисляем расстояния, пройденные мышью по x и по y за один кадр
+					mouseTravelledDistance += sqrt(frameMouseDistanceX*frameMouseDistanceX + frameMouseDistanceY * frameMouseDistanceY);
 				}
-			}
 
-			if (mousePressed) { //если мышь зажата
-				float frameMouseDistanceX = mouseAppPos.x - mousePressPos.x,
-					frameMouseDistanceY = mouseAppPos.y - mousePressPos.y; //вычисляем расстояния, пройденные мышью по x и по y за один кадр
-				mouseTravelledDistance += sqrt(frameMouseDistanceX*frameMouseDistanceX + frameMouseDistanceY * frameMouseDistanceY);
-			}
-
-			if (dragVertex) { //если вершина в режиме drag'n'drop
-				(((vertex*)collisionPress)->move(mouseAppPos.x - dx, mouseAppPos.y - dy)); //переместить ее с учетом смещения
-			}
-			else if (dragEdge) { //если тянем ребро
-				draggingEdge[1].position = mouseAppPos; //перемещаем его конец к мыши
+				if (dragVertex) { //если вершина в режиме drag'n'drop
+					(((vertex*)collisionPress)->move(mouseAppPos.x - dx, mouseAppPos.y - dy)); //переместить ее с учетом смещения
+				}
+				else if (dragEdge) { //если тянем ребро
+					draggingEdge[1].position = mouseAppPos; //перемещаем его конец к мыши
+				}
 			}
 
 			g.print(); std::cout << endl;
