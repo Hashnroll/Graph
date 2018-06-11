@@ -26,6 +26,8 @@ bool fontLoaded = false; //загружен ли шрифт надписи для вершины?
 sf::Texture arrowTexture;
 sf::Sprite arrowTemplate; //спрайт для стрелочки(которая на дуге между вершинами)
 
+tgui::Layout2d inputWeightTextBoxSize(50,20); //размеры textbox для ввода ребра
+bool inputWeightInProcess;
 
 sf::RenderWindow app(sf::VideoMode(WIDTH,HEIGHT), "Graph wizard"); //окно приложения
 sf::View view;

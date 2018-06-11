@@ -52,11 +52,16 @@ int main() {
 
 	edge* selectedEdge = nullptr; //указатель на выделенное ребро
 
-	Button::Ptr button = Button::create("Kruskal algorithm");
-	gui.add(button);
-	TextBox::Ptr textBox = TextBox::create(); 
-	gui.add(textBox);
-	textBox->setPosition(100,100);
+	/*Button::Ptr button = Button::create("Kruskal algorithm");
+	gui.add(button);*/
+	tgui::TextBox::Ptr inputWeightTextBox = tgui::TextBox::create(); //поле для ввода веса дуги
+	inputWeightInProcess = false; //изначально вес дуги не вводится
+	inputWeightTextBox->setSize(inputWeightTextBoxSize); //задать размеры этого поля
+	inputWeightTextBox->hide(); //скрыть его вначале
+	gui.add(inputWeightTextBox); //добавить на экран
+
+	//tgui::ListBox::Ptr popupMenu; //popup меню для таких ф-й, как "случайное задание графа", "алгоритм Форда-Беллмана", ""
+
 
 	while (app.isOpen()) {
 
@@ -64,7 +69,7 @@ int main() {
 		mouseAppPos = app.mapPixelToCoords(mouseWindowPos); //получить координаты приложения(т.к. экран приложения может смещаться за																																пределы окна)
 
 		Event event;
-
+		
 		while (app.pollEvent(event)) {
 			if (event.type == Event::Closed)
 				app.close();
@@ -72,6 +77,10 @@ int main() {
 			// Resize window : set new size
 			if (event.type == sf::Event::Resized)
 				view.setSize(event.size.width,event.size.height); //расширить окно до размера приложения
+
+			gui.handleEvent(event);
+
+			if (inputWeightInProcess) selectedEdge->inputWeight(inputWeightTextBox);
 
 			//обработка нажатий мыши
 			if (event.type == Event::MouseButtonPressed && !mousePressed) { //если еще не нажата
@@ -131,13 +140,23 @@ int main() {
 						else if (collisionRelease->getType() == "Edge") {
 							if (dragEdge) dragEdge = false;
 							else if (collisionRelease->isSelected()) {
+								g.setWeight(((edge*)collisionRelease)->getFirstVertex()->getIndex(), ((edge*)collisionRelease)->getSecondVertex()->getIndex(), ((edge*)collisionRelease)->getWeight()); //обновить вес для ребра в структуре данных для хранения графа
+
+								inputWeightTextBox->setText("");
+
 								collisionRelease->deselect(); //если ребро выделено, отменить выделение
 								selectedEdge = nullptr; //выделенных ребер теперь нет
+								inputWeightTextBox->hide();
+								inputWeightInProcess = false;
 							}
 							else {
+								inputWeightTextBox->setText("");
+
 								if (selectedEdge != nullptr) selectedEdge->deselect(); //развыделить предыдущее выделенное ребро
 								collisionRelease->select(); //если ребро не выделено, выделить
 								selectedEdge = (edge*)(collisionRelease);
+								inputWeightInProcess = true;
+								selectedEdge->inputWeight(inputWeightTextBox);
 							}
 						}
 					}
@@ -180,8 +199,6 @@ int main() {
 			else if (dragEdge) { //если тянем ребро
 				draggingEdge[1].position = mouseAppPos; //перемещаем его конец к мыши
 			}
-
-			//gui.handleEvent(event);
 
 			g.print(); std::cout << endl;
 		}

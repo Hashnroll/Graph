@@ -33,6 +33,10 @@ private:
 			return weight;
 		}
 
+		void setWeight(int w) {
+			weight = w;
+		}
+
 		int compareTo(edgeGraph e) {
 			if (this->weight < e.weight) return -1;
 			else if (this->weight > e.weight) return 1;
@@ -134,6 +138,21 @@ public:
 			}
 		}
 		return false;
+	}
+
+	void setWeight(int x, int y, int w) {
+		for (std::deque<edgeGraph>::iterator it = adj.at(x).begin(); it != adj.at(x).end(); it++) {
+			if (it->vertexSecond() == y) {
+				it->setWeight(w);
+				break;
+			}
+		}
+		for (std::deque<edgeGraph>::iterator it = adj.at(y).begin(); it != adj.at(y).end(); it++) {
+			if (it->vertexFirst() == x) {
+				it->setWeight(w);
+				break;
+			}
+		}
 	}
 
 	void print() {
