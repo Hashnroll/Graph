@@ -31,6 +31,11 @@ extern bool inputWeightInProcess;
 
 extern tgui::ComboBox::Ptr verticesComboBox; //выбор вершины из выпадающего списка, от которой будет работать алгоритм Форда-Беллмана
 
+extern tgui::TextBox::Ptr verticesRandomTextBox;
+
+extern tgui::TextBox::Ptr edgesLowTextBox;
+extern tgui::TextBox::Ptr edgesHighTextBox;
+
 extern tgui::Tab::Ptr tabs; //вкладки
 
 extern sf::RenderWindow app; //окно приложения

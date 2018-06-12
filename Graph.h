@@ -1,3 +1,4 @@
+#pragma once
 #include <deque>
 #include <map>
 #include <iterator>
@@ -61,7 +62,6 @@ class Graph {
 private:
 
 	map<int, deque<edgeGraph>> adj; //список связей, где deque - двунаправленная очередь, в которой хранятся все ребра, инцидентные с вершиной по индексу i
-	map<int, int> indegree; //кол-во вершин, входящих в эту вершину. 1ый int-индекс вершины, 2ой int-кол-во вершин, входящих в нее
 	int V; //кол-во вершин в графе
 	int E; //кол-во ребер в графе
 	int maxIndex; //максимальный индекс
@@ -86,7 +86,6 @@ public:
 
 	void addVertex() { //добавить вершину
 		adj.insert(make_pair(maxIndex, deque<edgeGraph>())); //вставка нового дека в вектор
-		indegree.insert(pair<int, int>(maxIndex, 0));//изначально в вершину V не входят никакие вершины
 		V++; //увеличиваем счетчик вершин
 		maxIndex++;
 	}
@@ -105,7 +104,6 @@ public:
 			}
 		}
 
-		indegree.erase(i); //удалить вершину i из структуры indegree
 		V--;
 	}
 
@@ -113,7 +111,6 @@ public:
 		edgeGraph newEdge(v, w, weight);
 		adj.at(v).push_back(newEdge);
 		adj.at(w).push_back(newEdge);
-		indegree.at(w)++; //теперь в вершину w входит на одну вершину больше
 		E++;
 	}
 
@@ -129,7 +126,6 @@ public:
 				adj.at(w).erase(it_deque);
 				break;
 			}
-		indegree.at(w)--;
 	}
 
 	/*void vertexIdentification(int v, int w) { //отождествление вершин
@@ -183,6 +179,11 @@ public:
 			}
 			cout << endl;
 		}
+	}
+
+	void clear() {
+		E = V = maxIndex = 0;
+		adj.clear();
 	}
 
 };

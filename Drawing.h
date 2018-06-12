@@ -7,11 +7,11 @@ class vertex;
 
 class edge;
 
-
-std::list<vertex> vertices; //графическое представление вершин
-std::list<edge> edges; //графическое представление ребер
+extern std::list<vertex> vertices; //графическое представление вершин
+extern std::list<edge> edges; //графическое представление ребер
 
 											 //базовый класс для графического объекта интерфейса(вершин, ребер, кнопок)
+
 class InterfaceObject
 {
 protected:
@@ -237,11 +237,11 @@ public:
 };
 
 
-void addVertexToScreen(vertex* v) { //добавить вершину на экран
+inline void addVertexToScreen(vertex* v) { //добавить вершину на экран
 	vertices.push_back(*v);
 }
 
-void deleteEdgeFromScreen(edge* e) { //удалить ребро с экрана
+inline void deleteEdgeFromScreen(edge* e) { //удалить ребро с экрана
 	std::list<edge>::iterator it = edges.begin();
 	while (it != edges.end()) {
 		if (it->getFirstVertex() == e->getFirstVertex() && it->getSecondVertex() == e->getSecondVertex()) { //если вершины совпадают, то ребро найдено
@@ -252,11 +252,11 @@ void deleteEdgeFromScreen(edge* e) { //удалить ребро с экрана
 	}
 }
 
-std::list<edge>::iterator deleteEdgeFromScreen(std::list<edge>::iterator it) { //удалить ребро с экрана(через итератор)
+inline std::list<edge>::iterator deleteEdgeFromScreen(std::list<edge>::iterator it) { //удалить ребро с экрана(через итератор)
 	return edges.erase(it);
 }
 
-void deleteVertexFromScreen(vertex* v) { //удалить вершину с экрана
+inline void deleteVertexFromScreen(vertex* v) { //удалить вершину с экрана
 	std::list<edge>::iterator it = edges.begin();
 	while (it != edges.end()) { //удалить ребра, инцидентные вершине
 		if (it->getFirstVertex() == v || it->getSecondVertex() == v) it = deleteEdgeFromScreen(it);
@@ -274,17 +274,17 @@ void deleteVertexFromScreen(vertex* v) { //удалить вершину с экрана
 	}
 }
 
-void addEdgeToScreen(edge* e) { //добавить ребро на экран
+inline void addEdgeToScreen(edge* e) { //добавить ребро на экран
 	edges.push_back(*e);
 }
 
 
-void drawGraph() { //отрисовка вершин и ребер
+inline void drawGraph() { //отрисовка вершин и ребер
 	for (auto e : edges) e.draw();
 	for (auto v : vertices) v.draw();
 }
 
-InterfaceObject* findCollision(sf::Vector2f mouseAppPos) { //найти попадание в вершину
+inline InterfaceObject* findCollision(sf::Vector2f mouseAppPos) { //найти попадание в вершину
 	std::list<vertex>::iterator v = vertices.begin();
 	while (v != vertices.end()) {
 		if (v->contains(mouseAppPos)) {
@@ -305,7 +305,7 @@ InterfaceObject* findCollision(sf::Vector2f mouseAppPos) { //найти попадание в в
 }
 
 
-void vertex::move(float x, float y) {
+inline void vertex::move(float x, float y) {
 	//перемещение вершины
 	coord.position.x = x;
 	coord.position.y = y;
