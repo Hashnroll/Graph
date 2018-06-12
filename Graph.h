@@ -1,59 +1,70 @@
 #include <deque>
 #include <map>
 #include <iterator>
-#include <map>
 #include <algorithm>
 #include <iostream>
 
 using namespace std;
 
+class edgeGraph {
+private:
+	int v; //первая вершина, из которой идет дуга
+	int w; //вторая вершина, в которую идет дуга
+	int weight; //вес дуги
+public:
+	edgeGraph() {
+		weight = INT_MAX;
+	}
+
+	bool isNull() {
+		return (weight == INT_MAX);
+	}
+
+	edgeGraph(int indexFirst, int indexSecond, int weightValue) {
+		v = indexFirst;
+		w = indexSecond;
+		weight = weightValue;
+	}
+
+	int vertexFirst() {
+		return v;
+	}
+
+	int vertexSecond() {
+		return w;
+	}
+
+	int getWeight() {
+		return weight;
+	}
+
+	void setWeight(int w) {
+		weight = w;
+	}
+
+	int compareTo(edgeGraph e) {
+		if (this->weight < e.weight) return -1;
+		else if (this->weight > e.weight) return 1;
+		else return 0;
+	}
+
+	const bool operator==(edgeGraph e) {
+		return ((v == e.vertexFirst()) && (w == e.vertexSecond()) && (weight = e.getWeight()));
+	}
+
+	void operator=(edgeGraph e) {
+		v = e.vertexFirst(); w = e.vertexSecond(); weight = e.getWeight();
+	}
+};
+
 class Graph {
 private:
-	class edgeGraph {
-	private:
-		int v; //первая вершина, из которой идет дуга
-		int w; //вторая вершина, в которую идет дуга
-		int weight; //вес дуги
-	public:
-		edgeGraph(int indexFirst, int indexSecond, int weightValue) {
-			v = indexFirst;
-			w = indexSecond;
-			weight = weightValue;
-		}
-
-		int vertexFirst() {
-			return v;
-		}
-
-		int vertexSecond() {
-			return w;
-		}
-
-		int getWeight() {
-			return weight;
-		}
-
-		void setWeight(int w) {
-			weight = w;
-		}
-
-		int compareTo(edgeGraph e) {
-			if (this->weight < e.weight) return -1;
-			else if (this->weight > e.weight) return 1;
-			else return 0;
-		}
-
-		const bool operator==(edgeGraph e) {
-			return ((v==e.vertexFirst()) && (w==e.vertexSecond()) && (weight=e.getWeight()));
-		}
-	};
 
 	map<int, deque<edgeGraph>> adj; //список связей, где deque - двунаправленная очередь, в которой хранятся все ребра, инцидентные с вершиной по индексу i
 	map<int, int> indegree; //кол-во вершин, входящих в эту вершину. 1ый int-индекс вершины, 2ой int-кол-во вершин, входящих в нее
 	int V; //кол-во вершин в графе
 	int E; //кол-во ребер в графе
 	int maxIndex; //максимальный индекс
-
 
 public:
 
@@ -63,6 +74,15 @@ public:
 		maxIndex = 0;
 	}
 
+	deque<int> getVertices() {
+		deque<int> vertices;
+		for (auto it = adj.begin(); it != adj.end(); it++) vertices.push_back(it->first);
+		return vertices;
+	}
+
+	deque<edgeGraph> getAdj(int v) {
+		return adj.at(v);
+	}
 
 	void addVertex() { //добавить вершину
 		adj.insert(make_pair(maxIndex, deque<edgeGraph>())); //вставка нового дека в вектор
@@ -120,7 +140,7 @@ public:
 		deleteVertex(w); //удалить w из графа
 	}*/
 
-	int getVerticesAmount() {
+	int getVerticesAmount() { 
 		return V;
 	}
 
@@ -140,7 +160,7 @@ public:
 		return false;
 	}
 
-	void setWeight(int x, int y, int w) {
+	void setWeight(int x, int y, int w) { //установить вес для дуги из x в y
 		for (std::deque<edgeGraph>::iterator it = adj.at(x).begin(); it != adj.at(x).end(); it++) {
 			if (it->vertexSecond() == y) {
 				it->setWeight(w);
@@ -155,7 +175,7 @@ public:
 		}
 	}
 
-	void print() {
+	void print() { //вывод графа
 		for (map<int, deque<edgeGraph>>::iterator itAdj = adj.begin(); itAdj != adj.end(); itAdj++) {
 			cout << itAdj->first << " : ";
 			for (auto it = (itAdj->second).begin(); it != (itAdj->second).end(); it++) {

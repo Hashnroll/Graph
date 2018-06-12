@@ -3,36 +3,42 @@
 #pragma once
 #include <TGUI/TGUI.hpp>
 
-unsigned int WIDTH = 1200, HEIGHT = 780; //ширина, высота окна
-unsigned int MAX_VERTICES = 100; //максимальное кол-во вершин
-unsigned int MAX_EDGES = 500;
-int VERTEX_RADIUS = 25; //радиус вершины 
-int VERTEX_NAME_SIZE = VERTEX_RADIUS * 50 / 51; //размер надписи на вершине
-int MOUSE_TRAVEL_THRESHOLD = 100; //если мышь прошла расстояние, меньшее этого, то не регистировать это, как пройденное расстояние
+extern unsigned int WIDTH, HEIGHT; //ширина, высота окна
+extern unsigned int MAX_VERTICES; //максимальное кол-во вершин
+extern int VERTEX_RADIUS; //радиус вершины 
+extern int VERTEX_NAME_SIZE; //размер надписи на вершине
+extern int MOUSE_TRAVEL_THRESHOLD; //если мышь прошла расстояние, меньшее этого, то не регистировать это, как пройденное расстояние
 
-int EDGE_BOUND_VALUE = 20; //коэф. для определения попадания точки в ребро(максим. расстояние от ребра до границы области, где еще регистрируется попадание в ребро)
-int EDGE_TEXT_SIZE = 30;
+extern int EDGE_BOUND_VALUE; //коэф. для определения попадания точки в ребро(максим. расстояние от ребра до границы области, где еще регистрируется попадание в ребро)
+extern int EDGE_TEXT_SIZE;
  
-sf::Color vertexColor(100, 200, 150); //цвет вершины
-sf::Color vertexColorSelected(200, 100, 0); //цвет выделенной вершины
-sf::Color edgeColor = sf::Color::Black; //цвет ребра
-sf::Color edgeColorSelected = sf::Color::Red; //цвет выделенного ребра
+extern sf::Color vertexColor; //цвет вершины
+extern sf::Color vertexColorSelected; //цвет выделенной вершины
+extern sf::Color edgeColor; //цвет ребра
+extern sf::Color edgeColorSelected; //цвет выделенного ребра
 
-sf::Color backg(234, 239, 243); //цвет фона
+extern sf::Color backg; //цвет фона
 
-sf::Font font; //шрифт для надписи имени вершины
-bool fontLoaded = false; //загружен ли шрифт надписи для вершины?
+extern sf::Font font; //шрифт для надписи имени вершины
+extern bool fontLoaded; //загружен ли шрифт надписи для вершины?
 
-sf::Texture arrowTexture;
-sf::Sprite arrowTemplate; //спрайт для стрелочки(которая на дуге между вершинами)
+extern sf::Texture arrowTexture;
+extern sf::Sprite arrowTemplate; //спрайт для стрелочки(которая на дуге между вершинами)
 
-tgui::TextBox::Ptr inputWeightTextBox;
-tgui::Layout2d inputWeightTextBoxSize(50,20); //размеры textbox для ввода ребра
-bool inputWeightInProcess;
+extern tgui::TextBox::Ptr inputWeightTextBox; //ввод веса дуги
+extern tgui::Layout2d inputWeightTextBoxSize; //размеры textbox для ввода ребра
+extern bool inputWeightInProcess;
 
-tgui::Tab::Ptr tabs; //вкладки
+extern tgui::ComboBox::Ptr verticesComboBox; //выбор вершины из выпадающего списка, от которой будет работать алгоритм Форда-Беллмана
 
-sf::RenderWindow app(sf::VideoMode(WIDTH,HEIGHT), "Graph wizard"); //окно приложения
-sf::View view;
+extern tgui::Tab::Ptr tabs; //вкладки
 
-tgui::Gui gui(app); //gui для виджетов
+extern sf::RenderWindow app; //окно приложения
+extern sf::View view;
+
+extern sf::RenderWindow infoApp; //окно, появляется при выводе работы алгоритма, матрицы смежности и т.д.
+
+extern tgui::Gui gui; //gui для виджетов
+extern tgui::Gui infoGui; //gui для вывода информации
+
+void onTabSelected(tgui::Gui& gui, std::string selectedTab);

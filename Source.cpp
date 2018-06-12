@@ -1,5 +1,5 @@
-#include "Graph.h"
 #include "Drawing.h"
+#include "Graph.h"
 #include <iostream>
 
 //Design todo-s
@@ -10,6 +10,7 @@
 //TODO #5: fix vertex removing(edge have ptrs to its vertices and when vertex is removed ptr may point to another vertex which is obviously incorrect)
 //TODO #6: implement menu for input edge weight etc.
 //TODO #7: implement deleteVertexFromScreen in O(1)
+//TODO #8: implement printing of Ford-Bellman results
  
 //Performance todo-s
 //TODO #1: check memory leaks
@@ -18,61 +19,27 @@
 using namespace sf;
 using namespace tgui;
 
+Graph g; //создать граф
+
+void init(Graph* g);
+
 void onTabSelected(tgui::Gui& gui, std::string selectedTab)
 {
+
 	// Show the correct panel
 	if (selectedTab == "Graph") gui.get("MenuPanel")->hide();
-	else if (selectedTab == "Menu") gui.get("MenuPanel")->show();
+	else if (selectedTab == "Menu") {
+		gui.get("MenuPanel")->show();
+		//обновление combobox
+		verticesComboBox->removeAllItems();
+		for (int vIndex : g.getVertices()) 
+			verticesComboBox->addItem(std::to_string(vIndex));
+	}
 }
-
-
-void init() {
-	if (font.loadFromFile("fonts/arial.ttf"))  //загрузить шрифт для надписей
-		fontLoaded = true;
-
-	if (arrowTexture.loadFromFile("sprites/arrow.png")) //загрузить спрайт для стрелки на дуге
-		arrowTemplate.setTexture(arrowTexture);
-		 
-	view.reset(sf::FloatRect(0,0,WIDTH,HEIGHT));
-
-	//настройка вкладок для 1)отображения графа и 2)меню
-	tabs = tgui::Tab::create();
-	tabs->add("Graph");
-	tabs->add("Menu");
-	tabs->setPosition(0, 0);
-	tabs->setSize(0, 0);
-	gui.add(tabs);
-
-	// Create the first panel
-	tgui::Panel::Ptr menuPanel = tgui::Panel::create();
-	menuPanel->setSize(WIDTH, HEIGHT);
-	menuPanel->setPosition(tabs->getPosition().x, tabs->getPosition().y + tabs->getTabHeight());
-	//добавить виджеты на панель
-	menuPanel->add(tgui::Button::create("Ford-Bellman"));
-	//добавить панель в gui
-	gui.add(menuPanel, "MenuPanel");
-
-	// Enable callback when another tab is selected (pass reference to the gui as first parameter)
-	tabs->connect("TabSelected", onTabSelected, std::ref(gui));
-
-	// Select the first tab and only show the first panel
-	tabs->select("Graph");
-	menuPanel->hide();
-
-	//настройка поля для ввода веса дуги
-	inputWeightTextBox = tgui::TextBox::create(); //поле для ввода веса дуги
-	inputWeightInProcess = false; //изначально вес дуги не вводится
-	inputWeightTextBox->setSize(inputWeightTextBoxSize); //задать размеры этого поля
-	inputWeightTextBox->hide(); //скрыть его вначале
-	gui.add(inputWeightTextBox); //добавить на экран
-}
-
-
 
 int main() {
-	Graph g;
 
-	init(); //начальная инициализация
+	init(&g);
 
 	InterfaceObject *collisionPress=nullptr, *collisionRelease=nullptr; //указатели на элемент интерфейса, на которые попали нажатие и отпускание мыши(вершина, ребро, или кнопка)
 
@@ -239,6 +206,7 @@ int main() {
 		}
 
 		app.setView(view); //установить параметры окна для приложения(ширина, высота) - используется при переходе в fullscreen например
+		gui.setView(view);
 
 		app.clear(backg); //очистить окно
 		drawGraph(); //отобразить граф
@@ -247,6 +215,20 @@ int main() {
 
 		gui.draw();
 		app.display(); //отобразить новый фрейм
+
+		if (infoApp.isOpen()) {
+			infoGui.handleEvent(event);
+
+			while (infoApp.pollEvent(event)) {
+				if (event.type == Event::Closed)
+					infoApp.close();
+			}
+
+
+			infoApp.clear(backg);
+			infoGui.draw();
+			infoApp.display();
+		}
 	}
 
 	return 0;
