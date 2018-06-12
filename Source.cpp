@@ -1,5 +1,5 @@
-#include "Drawing.h"
 #include "Graph.h"
+#include "Drawing.h"
 #include <iostream>
 
 //Design todo-s
@@ -202,7 +202,6 @@ int main() {
 				}
 			}
 
-			g.print(); std::cout << endl;
 		}
 
 		app.setView(view); //установить параметры окна для приложения(ширина, высота) - используется при переходе в fullscreen например
